@@ -14,5 +14,9 @@ int main()
 	dmp.load("..\\..\\data\\dem.txt");
 	dmp.diff();
 	dmp.learnDMP();
+	MatrixXd v = (dmp.dmpPara.xd.row(dmp.dmpPara.xd.rows() - 1)).adjoint();
+	MatrixXd g = (dmp.dmpPara.x.row(dmp.dmpPara.x.rows() - 1)).adjoint();
+	dmp.dmpPara.obstacle=(dmp.dmpPara.x.row(500)).adjoint();
+	dmp.ReproductDMP(1, v, g);
 	return 0;
 }
