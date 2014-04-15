@@ -175,11 +175,11 @@ void CDMP::ReproductDMP(double trun, VectorXd v_m, VectorXd g_m)
 			dmpPara.f_point = ((dmpPara.psi.array()*dmpPara.w.array()*dmpPara.s(i, 0)).sum()) / (dmpPara.psi.sum());
 			if (i == 0)
 			{
-				dmpPara.vd_point(j, 0) = (dmpPara.K*(dmpPara.gm(j, 0) - dmpPara.x(0, j)) + dmpPara.D*(dmpPara.vm(j, 0) - dmpPara.v_point(j, 0)) - dmpPara.K*(dmpPara.gm(j, 0) - dmpPara.x0(j, 0))*dmpPara.s(i, 0) + dmpPara.K*dmpPara.f_point + psi_obstacle(dmpPara.x.row(0).adjoint(), dmpPara.v_point)) / dmpPara.tau;
+				dmpPara.vd_point(j, 0) = (dmpPara.K*(dmpPara.gm(j, 0) - dmpPara.x(0, j)) + dmpPara.D*(dmpPara.vm(j, 0) - dmpPara.v_point(j, 0)) - dmpPara.K*(dmpPara.gm(j, 0) - dmpPara.x0(j, 0))*dmpPara.s(i, 0) + dmpPara.K*dmpPara.f_point + psi_obstacle(dmpPara.x.row(0).adjoint(), dmpPara.v_point,j)) / dmpPara.tau;
 			}
 			else
 			{
-				dmpPara.vd_point(j, 0) = (dmpPara.K*(dmpPara.gm(j, 0) - dmpPara.x(i-1, j)) + dmpPara.D*(dmpPara.vm(j, 0) - dmpPara.v_point(j, 0)) - dmpPara.K*(dmpPara.gm(j, 0) - dmpPara.x0(j, 0))*dmpPara.s(i, 0) + dmpPara.K*dmpPara.f_point + psi_obstacle(dmpPara.x.row(i-1).adjoint(), dmpPara.v_point_bk) ) / dmpPara.tau;
+				dmpPara.vd_point(j, 0) = (dmpPara.K*(dmpPara.gm(j, 0) - dmpPara.x(i-1, j)) + dmpPara.D*(dmpPara.vm(j, 0) - dmpPara.v_point(j, 0)) - dmpPara.K*(dmpPara.gm(j, 0) - dmpPara.x0(j, 0))*dmpPara.s(i, 0) + dmpPara.K*dmpPara.f_point + psi_obstacle(dmpPara.x.row(i-1).adjoint(), dmpPara.v_point_bk,j) ) / dmpPara.tau;
 			}
 			dmpPara.xd(i, j) = dmpPara.v_point(j, 0) / dmpPara.tau;
 			dmpPara.xdd(i, j) = dmpPara.vd_point(j, 0) / dmpPara.tau;
@@ -203,19 +203,29 @@ double norm(VectorXd x)
 	return sqrt(tmp);
 }
 
-double CDMP::psi_obstacle(VectorXd x, VectorXd v)
+double CDMP::psi_obstacle(VectorXd x, VectorXd v, int dim)
 {
+	double psi_tmp[2] = {0,0};
 	double lambda = 1;
-	double px = norm(x - dmpPara.obstacle);
+	VectorXd px = dmpPara.obstacle - x;
+	double px_norm = norm(px);
 	double v_norm = norm(v);
-	double cosa = v.adjoint()*x;
-	if (cosa > 0)
-		return 0;
+	double cosa = v.adjoint()*px;
+	if (cosa < 0)
+		psi_tmp[0] = 0; 
 	else
-	{
-		return  -lambda*pow(cosa, 2) * v_norm / px;
-	}
-		
+		psi_tmp[0] = -lambda*pow(cosa, 2) * v_norm / px_norm;
+	VectorXd xdx(x);//xdx means x+dx
+	xdx(dim, 0) = x(dim,0) - 0.01;
+	px = dmpPara.obstacle - xdx;
+	px_norm = norm(px);
+	cosa = v.adjoint()*px;
+	if (cosa < 0)
+		psi_tmp[1] = 0;
+	else
+		psi_tmp[1] = -lambda*pow(cosa, 2) * v_norm / px_norm;
+	//return (psi_tmp[1] - psi_tmp[0]) / 0.01;
+	return 0;
 }
 
 void CDMP::Save2TXT(string path, MatrixXd x)

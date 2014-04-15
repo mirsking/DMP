@@ -35,7 +35,7 @@ public:
 	MatrixXd diff(MatrixXd x);
 	void learnDMP();
 	void ReproductDMP(double trun, VectorXd v_m, VectorXd g_m);
-	double psi_obstacle(VectorXd x,VectorXd v);
+	double psi_obstacle(VectorXd x,VectorXd v,int dim);
 	void Save2TXT(string path, MatrixXd x);
 	sDMP dmpPara;
 
